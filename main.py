@@ -5,6 +5,23 @@ from typing import List, Dict, Any
 
 class Config:
     sources_dir: str = "sources"
+    relevant_columns = [
+        'doi',
+        'title',
+        'journal',
+        'year',
+        'author',
+        'url',
+        'keywords',
+        'entry_type',
+        'abstract'
+    ]
+
+def reduce_df_to_relevant_columns(df: pd.DataFrame, config: Config) -> pd.DataFrame:
+    
+    reduced_df = df[config.relevant_columns].copy()
+    
+    return reduced_df
 
 
 def read_bib_file(file_path: str) -> List[Dict[str, Any]]:
@@ -81,7 +98,10 @@ def main():
     # Consolidate all .bib files
     df = combine_bib_files_to_df(config.sources_dir)
 
-    print(df)
+    df = reduce_df_to_relevant_columns(df, config)
+
+    df.to_excel("article_summary.xlsx", index=False)
+
 
 
 if __name__ == "__main__":
