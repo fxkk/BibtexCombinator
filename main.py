@@ -17,6 +17,17 @@ class Config:
         'abstract'
     ]
 
+def apply_column_transformations(df: pd.DataFrame, config: Config) -> pd.DataFrame:
+    # Unify DOI format: remove 'https://doi.org/' prefix if present
+    if 'doi' in df.columns:
+        df['doi'] = df['doi'].str.replace(r'^https?://doi\.org/', '', regex=True)
+
+    # journal names can be in different cases, unify to title case
+    if 'journal' in df.columns:
+        df['journal'] = df['journal'].str.title()
+
+    return df
+
 def reduce_df_to_relevant_columns(df: pd.DataFrame, config: Config) -> pd.DataFrame:
     
     reduced_df = df[config.relevant_columns].copy()
@@ -97,6 +108,8 @@ def main():
     
     # Consolidate all .bib files
     df = combine_bib_files_to_df(config.sources_dir)
+
+    df = apply_column_transformations(df, config)
 
     df = reduce_df_to_relevant_columns(df, config)
 
