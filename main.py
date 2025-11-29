@@ -147,11 +147,6 @@ def main():
         unique_entries_df.to_excel(writer, sheet_name='Unique Entries', index=False)
         duplicates_df.to_excel(writer, sheet_name='Duplicates', index=False)
 
-    # output unique journals
-    unique_journals = sorted(unique_entries_df['journal'].dropna().unique())
-    for j in unique_journals:
-        print(j)
-
 
 if __name__ == "__main__":
     df = main()
