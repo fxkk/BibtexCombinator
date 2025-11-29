@@ -14,6 +14,7 @@ class Config:
         'url',
         'keywords',
         'entry_type',
+        'source',
         'abstract'
     ]
 
@@ -35,7 +36,7 @@ def reduce_df_to_relevant_columns(df: pd.DataFrame, config: Config) -> pd.DataFr
     return reduced_df
 
 
-def read_bib_file(file_path: str) -> List[Dict[str, Any]]:
+def read_bib_file(file_path: str, source_tag: str) -> List[Dict[str, Any]]:
     """Returns a list of entries like:
     [
         {
@@ -57,15 +58,18 @@ def read_bib_file(file_path: str) -> List[Dict[str, Any]]:
     """
 
     bib_database = bibtexparser.parse_file(file_path)
-    
+
     entries = []
     for entry in bib_database.entries:
         entry_dict = {
             'entry_type': entry.entry_type,
             'entry_key': entry.key,
+            'source': source_tag,
         }
         for field in entry.fields:
-            entry_dict[field.key.lower()] = field.value
+            # override source from bib file with filename-based source_tag
+            if field.key.lower() != "source":
+                entry_dict[field.key.lower()] = field.value
         
         entries.append(entry_dict)
     
@@ -89,7 +93,7 @@ def combine_bib_files_to_df(sources_dir: str) -> pd.DataFrame:
     
     for bib_file in bib_files:
         try:
-            entries = read_bib_file(bib_file.absolute())
+            entries = read_bib_file(bib_file.absolute(), source_tag=str(bib_file.stem).lower())
 
             all_entries.extend(entries)
                 
@@ -113,8 +117,7 @@ def main():
 
     df = reduce_df_to_relevant_columns(df, config)
 
-    df.to_excel("article_summary.xlsx", index=False)
-
+    df.to_excel("bibfile_summary.xlsx", index=False)
 
 
 if __name__ == "__main__":
