@@ -18,6 +18,21 @@ class Config:
         'abstract'
     ]
 
+    
+def filter_for_duplicates(df: pd.DataFrame):
+    # Remove duplicates based on 'doi' column, keeping the first occurrence
+    unique_df = df.drop_duplicates(subset=['doi'], keep='first')
+
+    # Find duplicates (all except the first occurrence)
+    duplicates_df = df[df.duplicated(subset=['doi'], keep='first')].copy()
+
+    # Map DOI to source of the kept entry
+    doi_to_source = unique_df.set_index('doi')['source'].to_dict()
+    duplicates_df['duplicate_in'] = duplicates_df['doi'].map(doi_to_source)
+
+    return unique_df, duplicates_df
+
+
 def apply_column_transformations(df: pd.DataFrame, config: Config) -> pd.DataFrame:
     # Unify DOI format: remove 'https://doi.org/' prefix if present
     if 'doi' in df.columns:
@@ -117,7 +132,11 @@ def main():
 
     df = reduce_df_to_relevant_columns(df, config)
 
-    df.to_excel("bibfile_summary.xlsx", index=False)
+    unique_entries_df, duplicates_df = filter_for_duplicates(df)
+
+    with pd.ExcelWriter('bibfile_summary.xlsx', engine='openpyxl') as writer:
+        unique_entries_df.to_excel(writer, sheet_name='Unique Entries', index=False)
+        duplicates_df.to_excel(writer, sheet_name='Duplicates', index=False)
 
 
 if __name__ == "__main__":
