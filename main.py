@@ -18,6 +18,10 @@ class Config:
         'abstract'
     ]
 
+    journal_aliases = {
+        "Energy Research & Social Science": ["Energy Research And Social Science", "Energy Research \\& Social Science"]
+    }
+
     
 def filter_for_duplicates(df: pd.DataFrame):
     # Remove duplicates based on 'doi' column, keeping the first occurrence
@@ -41,6 +45,11 @@ def apply_column_transformations(df: pd.DataFrame, config: Config) -> pd.DataFra
     # journal names can be in different cases, unify to title case
     if 'journal' in df.columns:
         df['journal'] = df['journal'].str.title()
+
+    # Apply journal aliases
+    if 'journal' in df.columns:
+        for standard_name, aliases in config.journal_aliases.items():
+            df['journal'] = df['journal'].replace(aliases, standard_name)
 
     return df
 
@@ -137,6 +146,11 @@ def main():
     with pd.ExcelWriter('bibfile_summary.xlsx', engine='openpyxl') as writer:
         unique_entries_df.to_excel(writer, sheet_name='Unique Entries', index=False)
         duplicates_df.to_excel(writer, sheet_name='Duplicates', index=False)
+
+    # output unique journals
+    unique_journals = sorted(unique_entries_df['journal'].dropna().unique())
+    for j in unique_journals:
+        print(j)
 
 
 if __name__ == "__main__":
